@@ -2,16 +2,33 @@
 
 *ASCII-MEMORY by Cass - 2026*
 
-Four static HTML pages with no build step and no server, linked by **Generate** / **View** / **THE FEED** / **My feed** tabs. You can open them from disk or host them anywhere (GitHub Pages, IPFS, S3…), or install all four together as one Sage App.
+ASCII-MEMORY turns a picture into ASCII art small enough to live inside a Chia transaction memo,
+inscribes it on-chain with your wallet, and reads it back. It is four static HTML pages with no
+build step and no server, packaged as one sandboxed app for the [Sage wallet](https://github.com/xch-dev/sage).
 
-| File | What it does |
+## Install
+
+1. Download **[`ascii-memory-v3.5.2.zip`](ascii-memory-v3.5.2.zip)** from this repository.
+2. In Sage 0.13 or later, install it from the zip file and approve the permissions it asks for.
+3. It opens on the **Generate** tab; the other tabs are **View**, **THE FEED** and **My feed**.
+
+SHA-256 of the zip:
+
+```
+5e722dcf4666941d053f73651acea8ce0711b2bae904e299fa3f07362402bf88
+```
+
+### What the app contains
+
+| Page | What it does |
 |---|---|
-| `generator.html` | PNG/JPEG → ASCII art that fits a byte budget; exports the memo and a `send_transaction.json` wallet RPC request |
-| `myfeed.html` | **My feed**: same as THE FEED, but for your wallet's first unhardened address and with no XCH minimum |
-| `feed.html` | **THE FEED**: watches `xch1khfj4wj6wt783wxzysgt5etws3hy2s03025k0m3dy707ul8x9hnq2w0cym` and shows the 10 newest ASCII art inscriptions of at least 1 XCH sent to it |
-| `app-config.js` | Shared settings: app name, credit line, feed address and the 1 XCH feed minimum |
-| `amounts.js` | Shared amount formatting (XCH + mojo, locale separators) and the footer **Amounts** setting |
-| `viewer.html` | Coin ID or pending transaction ID → fetches memos from the public coinset.org API and renders the art; each art card can be saved or copied as a PNG (size: small/medium/large; colours follow the card's terminal style; optional caption with title, block and coin ID) |
+| **Generate** | PNG/JPEG → ASCII art that fits a byte budget, hand editing, terminal styles, and sending through Sage |
+| **View** | a coin ID or pending transaction ID → the inscription, in its stored style, with PNG export |
+| **THE FEED** | the newest inscriptions of at least 1 XCH sent to `xch1khfj4wj6wt783wxzysgt5etws3hy2s03025k0m3dy707ul8x9hnq2w0cym` |
+| **My feed** | the same, for your wallet's first unhardened address, with no XCH minimum |
+
+The pages are plain HTML and JavaScript inside the zip, so you can read every line before installing.
+The build script and the optional browser bridge are not published here.
 
 ## Amounts
 
@@ -32,40 +49,29 @@ Every mojo or XCH figure in the app goes through `amounts.js` and is shown in bo
 - **Totals and options:** a counter shows the total number of eligible inscriptions ever sent to the address and the XCH they sent, with a **+N new** badge when new ones arrive (click it to dismiss). **Show last** picks how many cards to show (5, 10, 20, 50 or All) and **Sort** picks **Newest first** or **Highest XCH first**, where ties go to the newest. Both choices are remembered on this device.
 - **Monitoring:** it checks every 60 seconds, but only while the page is visible, and when it comes back into view if the last check is stale. **Refresh now** checks immediately. Each check asks only for coins from the last seen block height on, so a check with nothing new is one API call.
 - **Index and memory:** to count every eligible inscription, the feed indexes the address's whole history of coins of 1 XCH or more, reading each block once. The index (coin ID, amount, height, time) is kept in the device's local storage, since confirmed coins never change, so later launches only check for new coins. Memo text is fetched only for the cards on screen and kept for the session. The index is rebuilt automatically if the feed address or minimum changes.
-- **Limits:** one check reads at most 200 new coins' blocks and continues automatically where it stopped. Mainnet only. The address and the minimum are set in `app-config.js` (`FEED_ADDRESS`, `FEED_MIN_MOJO`), shared by the Generate and THE FEED tabs.
+- **Limits:** one check reads at most 200 new coins' blocks and continues automatically where it stopped. Mainnet only. The address and the minimum live in `app-config.js` inside the package, shared by the Generate and THE FEED tabs.
 
 ## My feed
 
 `myfeed.html` is the same feed machinery pointed at your own wallet instead of the shared address:
 
-- **Address:** the wallet's **first unhardened address** (derivation index 0), read from Sage with `wallet.getDerivations({hardened: false, offset: 0, limit: 1})`. It works inside the Sage app and, in a browser, through `sage_bridge.py`. `?address=xch1…` overrides it for testing.
+- **Address:** the wallet's **first unhardened address** (derivation index 0), read from Sage with `wallet.getDerivations({hardened: false, offset: 0, limit: 1})`. Outside Sage there is no wallet to ask, so `myfeed.html?address=xch1…` points the page at any address.
 - **No minimum:** every coin at that address is checked, whatever the amount.
 - **Separate index:** stored per address, so several wallets keep separate indexes, with its own Show last and Sort settings.
 - **Sending to it:** the Generate tab has two destination buttons, **Send to THE FEED** (shared address, raises the amount to 1 XCH) and **Send to my feed** (your first unhardened address, any amount, 1 mojo is enough). The second replaces the old *Use my Sage address* button, which filled Sage's rotating receive address and so did not show up in My feed.
 
-## Sage App (0.13+)
+## The Sage App
 
-All four pages ship as one sandboxed Sage App, **ASCII-MEMORY**, with **Generate**, **View**, **THE FEED** and **My feed** tabs:
+The app is sandboxed by Sage: scripts run only from the package, network access is limited to the
+hosts below, and it cannot open outside links or download files.
 
-```bash
-python build_sage_app.py
-```
+### Permissions Sage will ask for
 
-This creates:
-- `dist/ascii-memory.zip`: install it in Sage from the zip file
-- `dist/ascii-memory/`: the same package as a folder. Run `python build_sage_app.py --serve` and install from the URL `http://localhost:9261/`
-
-What's in the package:
-- `index.html` is the generator (Sage opens the app there), `viewer.html` is the viewer, `feed.html` is THE FEED and `myfeed.html` is My feed. The build rewrites the tab links accordingly.
-- The finalized `sage-manifest.json` lists every file's sha256 and size. This is equivalent to running `sage-app finalize-manifest`, so no Node is needed. The source manifest and icon are in `sage-app/ascii-memory/`.
-
-**Rebuild after editing any page or script**: the manifest hashes must match the files, or Sage refuses the package. Bump `version` in the source manifest when you ship an update.
-
-### Permissions
-
-- Network access only to `https://api.coinset.org` and `https://testnet11.api.coinset.org` (for the View and THE FEED tabs).
-- `wallet.get_sync_status` (balance, receive address, and the network, read from the address prefix), `wallet.get_derivations` (the first unhardened address, for My feed) and `wallet.send_xch`. The app does not use `wallet.getKey`: inside apps that call requires the wallet fingerprint, which no app method provides.
-- `storage.persistent_webview`: see the Sage 0.13.0 workaround below.
+- **Network:** only `https://api.coinset.org` and `https://testnet11.api.coinset.org`, the public full-node API the View and feed tabs read from.
+- **`wallet.get_sync_status`:** balance, receive address and which network you are on.
+- **`wallet.get_derivations`:** your wallet's first unhardened address, which My feed watches.
+- **`wallet.send_xch`:** inscriptions. Sage still shows its own approval dialog for every send, and the app never sees your keys.
+- **`storage.persistent_webview`:** a Sage 0.13.0 workaround, see below. The app only stores display settings and its feed index on your device.
 
 ### Tabs and drafts
 
@@ -87,35 +93,24 @@ What's in the package:
 - **Hashing:** if the WebCrypto API is unavailable, coin IDs are hashed with a built-in pure-JS SHA-256.
 - **Incognito storage:** the manifest requests `storage.persistent_webview`, even though the app stores nothing beyond the session draft. Sage 0.13.0 on Windows fails its own "incognito storage" sandbox test (fixed after that release in [xch-dev/sage#841](https://github.com/xch-dev/sage/pull/841)) and blocks every app that runs in incognito mode. Requesting persistent storage makes Sage check its persistent-storage test instead. Once a Sage release includes the fix, you can remove the capability.
 
-## Workflow with Sage wallet via the RPC bridge (browser)
+## Running the pages outside Sage
 
-1. In Sage, turn on the RPC server in the settings and log in to the wallet you want to use.
-2. Start the bridge. It uses only the Python standard library:
-   ```bash
-   python sage_bridge.py
-   ```
-3. Open http://127.0.0.1:9260/generator.html. It connects to Sage and shows the wallet, network and spendable balance.
-4. Drop in an image and tune it. Click **Send to my feed** (or **Send to THE FEED**), then optionally **Use suggested fee**.
-5. **Build transaction**: Sage builds the transaction *without signing* and the page shows the inputs, outputs and fee.
-6. **Sign & push**: Sage signs it and submits it to the network. The page then gives you a permanent viewer link.
+Unzip the package and open `index.html` (Generate), `viewer.html`, `feed.html` or `myfeed.html` in a
+browser. Everything that only reads the chain works: View and THE FEED call the public coinset.org API
+directly, and the generator converts images, edits art and counts bytes locally.
 
-Browsers can't call Sage directly because its RPC requires Sage's TLS client certificate and sends no CORS headers. `sage_bridge.py` fills that gap:
-- it listens on 127.0.0.1 only
-- it forwards just 6 endpoints (`get_version`, `get_key`, `get_sync_status`, `get_derivations`, `send_xch`, `sign_coin_spends`)
-- it rejects requests from any other website or host name
-- it forces `send_xch` to `auto_submit: false`, so nothing is signed until you click **Sign & push**
+Two things differ outside Sage:
 
-Sage expects memos as **hex**; the page encodes the UTF-8 art for you.
+- **Sending** needs the wallet, so instead of **Send with Sage…** the generator shows the Chia
+  reference-wallet export: fill in the address, amount and fee, download `send_transaction.json`, then
 
-## Workflow with the Chia reference wallet
+  ```bash
+  chia rpc wallet send_transaction -j send_transaction.json
+  ```
 
-1. Open `generator.html` and drop in an image. Pick a byte budget (default 10 KB), then tune contrast, gamma, dithering and so on.
-2. Under "Chia reference wallet instead", enter your receive address, wallet ID, amount (1 mojo is fine) and fee, then download `send_transaction.json`.
-3. Send it with the reference wallet:
-   ```bash
-   chia rpc wallet send_transaction -j send_transaction.json
-   ```
-4. Open `viewer.html#0x<transaction_id>` while the transaction is pending. Once it confirms, the viewer switches to the permanent link `viewer.html#0x<coin_id>`. Any coin ID from the transaction works: the spent coin, or the new coin that carries the memo. Use `#testnet11:0x…` for testnet.
+  The response contains `transaction_id`. Paste it into the View tab while it is in the mempool, and the
+  page switches to the permanent coin ID once it confirms. Use `#testnet11:0x…` for testnet.
+- **My feed** cannot ask Sage for your address there. `myfeed.html?address=xch1…` points it at any address.
 
 ## Size limits (why ~457 KB)
 
@@ -129,17 +124,16 @@ Fees are optional while the mempool is not full. When it is full, the minimum is
 
 ## Memo format
 
-The style tag keeps its original `memoart:v1;` prefix, so inscriptions made before the ASCII-MEMORY rename stay compatible.
-
-
 - `memos[0]`: the art as plain UTF-8 ASCII, lines separated by `\n`, readable on any explorer
   - or, in **Pack** mode, `asciiz:` + base64(raw DEFLATE(art)): roughly 2–3× more detail, and only the viewer can decode it
 - `memos[1]` (optional): a short title
 - last memo: display settings, e.g. `memoart:v1;theme=green-crt` (about 26 bytes, counted in the byte budget)
 
+The settings memo keeps its original `memoart:v1;` prefix, so inscriptions made before the ASCII-MEMORY rename still open with their style.
+
 ### Text size
 
-Both pages have a text size control above the art: **Fit**, **A−**, a slider (2–40 px) and **A+**.
+Every page that shows art (Generate, View, THE FEED, My feed) has a text size control above it: **Fit**, **A−**, a slider (2–40 px) and **A+**.
 - **Fit** (the default) sizes the art to the width of its box, and the slider shows that size.
 - Moving the slider or pressing A−/A+ switches to a fixed size; large sizes scroll inside the art box. Ticking **Fit** again returns to automatic sizing.
 - In the generator the size also applies to the text editor; in the viewer it applies to every card.
@@ -170,7 +164,7 @@ The generator's **Terminal style** picker restyles the preview and stores the st
 | `c64` | Commodore 64 |
 | `solarized-dark` | Solarized Dark |
 
-- The styles are defined once, in `terminal-themes.js`, which both pages and both Sage packages share. Only the id goes on-chain, and an unknown id falls back to `paper`.
+- The styles are defined once, in `terminal-themes.js` inside the package. Only the id goes on-chain, and an unknown id falls back to `paper`.
 - Choosing a dark style ticks **Invert brightness** automatically, so bright areas of the image become dense characters that glow on the dark background. You can still untick it.
 - Fonts come from the viewer's system (for example Ubuntu Mono if it's installed). The Sage sandbox doesn't allow loading web fonts.
 
@@ -181,3 +175,11 @@ A wallet `transaction_id` is the hash of the spend bundle, and it is not stored 
 1. `get_coin_record_by_name` → find the block where the coin was created and the block where it was spent
 2. `get_block_record_by_height` → `get_block_spends_with_conditions` → read the memo lists from the `CREATE_COIN` (opcode 51) conditions
 3. if the ID is not a coin, `get_mempool_item_by_tx_id` → wait for the input coin to be spent, then repeat step 1
+
+## Licence
+
+MIT. `sage-runtime-bridge.js` inside the package is part of the
+[sage-app-sdk](https://www.npmjs.com/package/sage-app-sdk) and stays under Apache-2.0; its licence
+travels with it in the zip as `LICENSE-sage-app-sdk.txt`.
+
+*ASCII-MEMORY by Cass - 2026*
