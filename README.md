@@ -1,6 +1,7 @@
 # ASCII-MEMORY — ASCII art inscribed in Chia transaction memos
 
 *ASCII-MEMORY by Cass - 2026*
+<img width="1641" height="1000" alt="image" src="https://github.com/user-attachments/assets/99650f9c-ae09-453b-a771-858de16b4c77" />
 
 ASCII-MEMORY turns a picture into ASCII art small enough to live inside a Chia transaction memo,
 inscribes it on-chain with your wallet, and reads it back. It is four static HTML pages with no
