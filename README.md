@@ -9,7 +9,7 @@ build step and no server, packaged as one sandboxed app for the [Sage wallet](ht
 
 ## Install
 
-1. Download **[`ascii-memory-v3.5.2.zip`](ascii-memory-v3.5.2.zip)** from this repository.
+1. From url : https://cassxch.com/ascii_memory/, or you can download **[`ascii-memory-v3.5.2.zip`](ascii-memory-v3.5.2.zip)** from this repository.
 2. In Sage 0.13 or later, install it from the zip file and approve the permissions it asks for.
 3. It opens on the **Generate** tab; the other tabs are **View**, **THE FEED** and **My feed**.
 
