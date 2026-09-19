@@ -1,23 +1,45 @@
 # ASCII-MEMORY — ASCII art inscribed in Chia transaction memos
 
 *ASCII-MEMORY by Cass - 2026*
+
 <img width="1641" height="1000" alt="image" src="https://github.com/user-attachments/assets/99650f9c-ae09-453b-a771-858de16b4c77" />
 
 ASCII-MEMORY turns a picture into ASCII art small enough to live inside a Chia transaction memo,
-inscribes it on-chain with your wallet, and reads it back. It is four static HTML pages with no
+inscribes it on-chain with your wallet, and reads it back. It is five static HTML pages with no
 build step and no server, packaged as one sandboxed app for the [Sage wallet](https://github.com/xch-dev/sage).
 
 ## Install
 
-1. Install from url : https://cassxch.com/ascii_memory/ or download **[`ascii-memory-v3.8.3.zip`](ascii-memory-v3.8.3.zip)** from this repository.
-2. In Sage 0.13 or later, install it from the zip file and approve the permissions it asks for.
-3. It opens on the **Home** page, which explains the app. The other tabs are **The Wall**, **My Memos**, **Generate** and **View**.
+Sage 0.13 or later can install the app two ways. Both install the same files and ask for the same permissions.
+
+### From URL (recommended)
+
+1. In Sage, open **Apps** and choose to install an app from a URL.
+2. Enter **`https://cassxch.com/ascii_memory/`** and approve the permissions it asks for.
+
+The advantage of a URL install is **updates**: Sage checks that address for new versions and offers
+to update when a new release is published there, so you don't have to download anything.
+
+### From the zip file
+
+1. Download **[`ascii-memory-v3.9.1.zip`](ascii-memory-v3.9.1.zip)** from this repository.
+2. In Sage, install it from the zip file and approve the permissions it asks for.
+
+A zip install never checks for updates: to update, download the new zip and install it again.
+If you switch to the URL install, remove the zip copy afterwards so you don't run two copies with separate settings.
 
 SHA-256 of the zip:
 
 ```
-fa75dab6b0439d42d4b0dde12a82fc4a604790f1ba4a97393c788d3513cfea5a
+75401f1313fa1bf913ef5bb1667d28e624cc8175b869c68b156d1cf010e60eb0
 ```
+
+Either way, the app opens on the **Home** page, which explains it. The other tabs are **The Wall**,
+**My Memos**, **Generate** and **View**.
+
+**If a URL install fails with "app directory already exists, cannot create"**, an earlier attempt left
+a folder behind. Close Sage, delete the folder starting with `url-cassxch-com-` in
+`%APPDATA%\com.rigidnetwork.sage\apps\` (Windows), then install again.
 
 ### What the app contains
 
@@ -59,6 +81,7 @@ Every mojo or XCH figure in the app goes through `amounts.js` and is shown in bo
 - **Address:** the wallet's **first unhardened address** (derivation index 0), read from Sage with `wallet.getDerivations({hardened: false, offset: 0, limit: 1})`. Outside Sage there is no wallet to ask, so `myfeed.html?address=xch1…` points the page at any address.
 - **No minimum:** every coin at that address is checked, whatever the amount.
 - **Separate index:** stored per address, so several wallets keep separate indexes, with its own Show last and Sort settings.
+- **XCHandles:** the Generate tab's receive address also accepts an [XCHandle](https://xchandles.com) such as `@cassfairiesclub` (mainnet only). It is looked up on `api.xchandles.com` as you type, and the address it points at (its NFT's owner address) is shown under the field, used for the transaction and shown again in the review before you sign. Unregistered or expired handles show an error and can't be sent to.
 - **Sending to it:** the Generate tab has two presets, **The Wall preset** (shared address, sets the amount to 1 XCH) and **My Memos preset** (your first unhardened address, sets the amount to 1 mojo). You can still change the amount or address after using one. The second replaces the old *Use my Sage address* button, which filled Sage's rotating receive address and so did not show up in My Memos.
 
 ## The Sage App
@@ -68,7 +91,7 @@ hosts below, and it cannot open outside links or download files.
 
 ### Permissions Sage will ask for
 
-- **Network:** only `https://api.coinset.org` and `https://testnet11.api.coinset.org`, the public full-node API the View, The Wall and My Memos tabs read from.
+- **Network:** only `https://api.coinset.org` and `https://testnet11.api.coinset.org`, the public full-node API the View, The Wall and My Memos tabs read from, and `https://api.xchandles.com`, to turn an `@handle` typed in Generate's receive address or in View into an address.
 - **`wallet.get_sync_status`:** balance, receive address and which network you are on.
 - **`wallet.get_derivations`:** your wallet's first unhardened address, which My Memos watches.
 - **`wallet.send_xch`:** inscriptions. Sage still shows its own approval dialog for every send, and the app never sees your keys.
@@ -78,7 +101,7 @@ hosts below, and it cannot open outside links or download files.
 
 - The tabs are separate pages inside the app, so switching tabs reloads the page. To avoid losing work, the Generate tab keeps a session draft: all settings, the address/amount/fee, any hand edits, and a copy of the image (downscaled to 1600 px, WebP). The draft is restored when you come back.
 - The View tab remembers the last inscription it showed and caches completed lookups for the session (up to 6, oldest dropped first if storage runs out). Coming back from Generate redraws the art without calling coinset.org; a **Reload from chain** button forces a fresh lookup. Pending transactions and empty or failed lookups are never cached.
-- **Any address:** type an `xch1…` (or `txch1…`) address instead of an ID, or use the **The Wall's address** example button, to list every ASCII art inscription that address received, whatever the amount, with the same count, **Show last** and **Sort** controls as The Wall. The address goes in the link (`viewer.html#xch1…`), and each address keeps its own index on the device, so reopening it only checks for new coins. A busy address can take a while the first time: each check reads at most 200 coins' blocks and then continues on its own.
+- **Any address:** type an `xch1…` (or `txch1…`) address or an XCHandle such as `@cassfairiesclub` instead of an ID, or use the **The Wall's address** example button, to list every ASCII art inscription that address received, whatever the amount, with the same count, **Show last** and **Sort** controls as The Wall. A handle is looked up on `api.xchandles.com` and shown next to the address it points at. The address or handle goes in the link (`viewer.html#xch1…` or `viewer.html#@name`), and each address keeps its own index on the device, so reopening it only checks for new coins. A busy address can take a while the first time: each check reads at most 200 coins' blocks and then continues on its own.
 - **Just-sent inscriptions:** a transaction can take a few seconds to reach coinset.org's mempool. If an ID is not found yet, or its coin is unspent with no memos yet, View looks it up again every 5 seconds for up to 2 minutes, with a countdown. Once the transaction is in the mempool, it waits for confirmation and switches to the permanent coin link.
 - After **Send with Sage…**, the result has an **Open in viewer →** link that opens the View tab on the new inscription.
 
