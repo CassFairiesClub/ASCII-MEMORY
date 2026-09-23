@@ -22,7 +22,7 @@ to update when a new release is published there, so you don't have to download a
 
 ### From the zip file
 
-1. Download **[`ascii-memory-v3.10.0.zip`](ascii-memory-v3.10.0.zip)** from this repository.
+1. Download **[`ascii-memory-v3.11.0.zip`](ascii-memory-v3.11.0.zip)** from this repository.
 2. In Sage, install it from the zip file and approve the permissions it asks for.
 
 A zip install never checks for updates: to update, download the new zip and install it again.
@@ -31,7 +31,7 @@ If you switch to the URL install, remove the zip copy afterwards so you don't ru
 SHA-256 of the zip:
 
 ```
-e7085fbf74929f94d0143e496c4bbd3101a36a9c44a9a6a0b2ed3ac4c2f1eddc
+efaeae331bee1202840cf92bd711327d456ec889c8b6609ae6739e4b405319e9
 ```
 
 Either way, the app opens on the **Home** page, which explains it. The other tabs are **The Wall**,
@@ -81,11 +81,11 @@ Every mojo or XCH figure in the app goes through `amounts.js` and is shown in bo
 - **Address:** the wallet's **first unhardened address** (derivation index 0), read from Sage with `wallet.getDerivations({hardened: false, offset: 0, limit: 1})`. Outside Sage there is no wallet to ask, so `myfeed.html?address=xch1…` points the page at any address.
 - **No minimum:** every coin at that address is checked, whatever the amount.
 - **Separate index:** stored per address, so several wallets keep separate indexes, with its own Show last and Sort settings.
-- **Names (XCHandles and Namesdao):** the Generate tab's receive address also accepts a name such as `@cassfairiesclub` (or `@name.xch`), mainnet only. Both [XCHandles](https://xchandles.com) (`api.xchandles.com`) and [Namesdao](https://www.namesdao.org) (`api.namesdao.org`) are asked at once, and the address is shown under the field, used for the transaction and shown again in the review before you sign.
-  - **Both agree:** the note says so, for example `@cassfairiesclub → xch1mxuz… (XCHandles and Namesdao agree)`.
-  - **Only one knows the name:** its address is used and the note names the service and why the other failed.
-  - **They disagree:** the same name can be registered in both services by different owners. Nothing is filled in. The app shows both addresses with a warning and a button each; sending stays blocked until you pick one, and the note then says which service you chose.
-  - **Neither knows it:** the note gives both services' answers and sending stays blocked.
+- **Names (XCHandles and Namesdao):** the Generate tab's receive address also accepts a name, mainnet only. The two services are separate namespaces and the spelling picks one: **`@name`** is an [XCHandle](https://xchandles.com) (`api.xchandles.com`), **`name.xch`** a [Namesdao](https://www.namesdao.org) name (`api.namesdao.org`). The address is shown under the field, used for the transaction, and shown again in the review before you sign.
+  - The other namespace is looked up as well, only as a check. It is never used unless you ask for it.
+  - **Same name, different address in the other namespace:** the note turns amber, says which namespace is being used and what the other one points at, with a button to switch to it. This catches writing `@name` when `name.xch` was meant, or the other way round.
+  - **Both namespaces agree:** the note says so, for example `@cassfairiesclub → xch1mxuz… (XCHandles; cassfairiesclub.xch points at the same address)`.
+  - **Not registered in the namespace you wrote:** nothing is filled in and sending stays blocked; if the other namespace has the name, the note offers it with a button.
 - **Sending to it:** the Generate tab has two presets, **The Wall preset** (shared address, sets the amount to 1 XCH) and **My Memos preset** (your first unhardened address, sets the amount to 1 mojo). You can still change the amount or address after using one. The second replaces the old *Use my Sage address* button, which filled Sage's rotating receive address and so did not show up in My Memos.
 
 ## The Sage App
@@ -105,7 +105,7 @@ hosts below, and it cannot open outside links or download files.
 
 - The tabs are separate pages inside the app, so switching tabs reloads the page. To avoid losing work, the Generate tab keeps a session draft: all settings, the address/amount/fee, any hand edits, and a copy of the image (downscaled to 1600 px, WebP). The draft is restored when you come back.
 - The View tab remembers the last inscription it showed and caches completed lookups for the session (up to 6, oldest dropped first if storage runs out). Coming back from Generate redraws the art without calling coinset.org; a **Reload from chain** button forces a fresh lookup. Pending transactions and empty or failed lookups are never cached.
-- **Any address:** type an `xch1…` (or `txch1…`) address or a name such as `@cassfairiesclub` (XCHandles and Namesdao, with the same agreement, single-service and conflict handling as Generate) instead of an ID, or use the **The Wall's address** example button, to list every ASCII art inscription that address received, whatever the amount, with the same count, **Show last** and **Sort** controls as The Wall. A handle is looked up on `api.xchandles.com` and shown next to the address it points at. The address or handle goes in the link (`viewer.html#xch1…` or `viewer.html#@name`), and each address keeps its own index on the device, so reopening it only checks for new coins. A busy address can take a while the first time: each check reads at most 200 coins' blocks and then continues on its own.
+- **Any address:** type an `xch1…` (or `txch1…`) address or a name (`@name` for XCHandles, `name.xch` for Namesdao), with the same namespace check as Generate: the list is for the namespace you wrote, and a warning appears when the other one holds that name at a different address instead of an ID, or use the **The Wall's address** example button, to list every ASCII art inscription that address received, whatever the amount, with the same count, **Show last** and **Sort** controls as The Wall. A handle is looked up on `api.xchandles.com` and shown next to the address it points at. The address or handle goes in the link (`viewer.html#xch1…` or `viewer.html#@name`), and each address keeps its own index on the device, so reopening it only checks for new coins. A busy address can take a while the first time: each check reads at most 200 coins' blocks and then continues on its own.
 - **Just-sent inscriptions:** a transaction can take a few seconds to reach coinset.org's mempool. If an ID is not found yet, or its coin is unspent with no memos yet, View looks it up again every 5 seconds for up to 2 minutes, with a countdown. Once the transaction is in the mempool, it waits for confirmation and switches to the permanent coin link.
 - After **Send with Sage…**, the result has an **Open in viewer →** link that opens the View tab on the new inscription.
 
